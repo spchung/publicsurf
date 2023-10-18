@@ -1,0 +1,22 @@
+App:
+  Port: 8080
+
+Database:
+  Host: "127.00.0.1"
+  Port: 5432
+  Username: "postgres"
+  Password: "postgres"
+  DBName: "postgres"
+
+Files:
+  Path: "./files"
+
+Images:
+  BaseDir: "/Users/stephen/Dev/public_surf/backend/images/"
+  HdPath: "/Users/stephen/Dev/public_surf/backend/images/hd/"
+  RegularPath: "/Users/stephen/Dev/public_surf/backend/images/regular/"
+  ThumbnailPath: "/Users/stephen/Dev/public_surf/backend/images/thumbnail/"
+
+
+Jwt:
+  Secret: "q1w2e3r4t5y6"
