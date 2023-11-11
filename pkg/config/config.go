@@ -9,6 +9,8 @@ import (
 type Config struct {
 	Database DatabaseConfig
 	Images   ImagesConfig
+	Jwt      JwtConfig
+	Files    FilesConfig
 }
 
 type DatabaseConfig struct {
@@ -26,10 +28,18 @@ type ImagesConfig struct {
 	RegularPath   string
 }
 
+type FilesConfig struct {
+	Path string
+}
+
+type JwtConfig struct {
+	SecretKey string
+}
+
 func GetConfig() {
-	viper.SetConfigName("App")
+	viper.SetConfigName("Config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/Users/stephen/Dev/public_surf/backend/configurations")
+	viper.AddConfigPath("configurations")
 
 	err := viper.ReadInConfig()
 	if err != nil {

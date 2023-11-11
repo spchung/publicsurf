@@ -12,20 +12,14 @@ import (
 func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	router := gin.Default()
-
-	//Register User Repo
+	//Register repository
 	userRepo := repository.NewUserRepository(db)
 	photoRepo := repository.NewPhotoRepository(db)
 
-	userService := service.NewUserService(userRepo, photoRepo)
-	userHandler := handler.NewUserHandler(userService)
-
-	// Register Photo Repo
-	photoService := service.NewPhotoService(userRepo, photoRepo)
-	photoHandler := handler.NewPhotoHandler(photoService)
-
 	baseAPI := router.Group("/v1")
 	userAPI := baseAPI.Group("/user")
+	userService := service.NewUserService(userRepo, photoRepo)
+	userHandler := handler.NewUserHandler(userService)
 	{
 		userAPI.GET("/:id", userHandler.GetUser)
 		userAPI.GET("/:id/count", userHandler.GetUserPhotoCount)
@@ -33,10 +27,19 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	}
 
 	photoAPI := baseAPI.Group("/photo")
+	photoService := service.NewPhotoService(userRepo, photoRepo)
+	photoHandler := handler.NewPhotoHandler(photoService)
 	{
 		photoAPI.POST("/upload", photoHandler.SaveFileToDisk)
 		photoAPI.GET("/:id/uploader-name", photoHandler.GetPhotoUploaderName)
 		photoAPI.GET("/process", photoHandler.ProcessImage)
+	}
+
+	authAPI := baseAPI.Group("/auth")
+	authService := service.NewAuthService(userRepo)
+	authHandler := handler.NewAuthHandler(authService, userService)
+	{
+		authAPI.GET("/jwt", authHandler.GenerateJwt)
 	}
 
 	return router

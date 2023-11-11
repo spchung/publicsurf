@@ -31,7 +31,7 @@ func (s *PhotoService) GetPhotoUploaderName(photoID uint64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	user, err := s.userRepo.FindByID(photo.UserID)
+	user, err := s.userRepo.GetUser(photo.UserID)
 	if err != nil {
 		return "", err
 	}

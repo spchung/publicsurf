@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 type ResponseOKWithDataModel struct {
 	Code    int         `json:"code"`
 	Data    interface{} `json:"data"`
@@ -30,12 +29,21 @@ type ResponseErrorCustomModel struct {
 
 func ResponseOKWithData(c *gin.Context, data interface{}) {
 	response := ResponseOKWithDataModel{
-		Code:	1000,
-		Data:	data,
+		Code:    1000,
+		Data:    data,
 		Message: "OK",
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func ResponseNotFound(c *gin.Context, message string) {
+	response := ResponseErrorModel{
+		Code:    99,
+		Message: message,
+	}
+
+	c.JSON(http.StatusNotFound, response)
 }
 
 func ResponseCreated(c *gin.Context, data interface{}) {

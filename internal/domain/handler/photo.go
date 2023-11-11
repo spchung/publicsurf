@@ -10,17 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type PhotoHnadler struct {
+type PhotoHandler struct {
 	photoService service.IPhotoService
 }
 
-func NewPhotoHandler(photoService service.IPhotoService) *PhotoHnadler {
-	var photoHandler = PhotoHnadler{}
+func NewPhotoHandler(photoService service.IPhotoService) *PhotoHandler {
+	var photoHandler = PhotoHandler{}
 	photoHandler.photoService = photoService
 	return &photoHandler
 }
 
-func (h *PhotoHnadler) GetPhotoUploaderName(c *gin.Context) {
+func (h *PhotoHandler) GetPhotoUploaderName(c *gin.Context) {
 	photoID := c.Param("id")
 	id, err := strconv.Atoi(photoID)
 	if err != nil {
@@ -35,7 +35,7 @@ func (h *PhotoHnadler) GetPhotoUploaderName(c *gin.Context) {
 	response.ResponseOK(c, name)
 }
 
-func (h *PhotoHnadler) ProcessImage(c *gin.Context) {
+func (h *PhotoHandler) ProcessImage(c *gin.Context) {
 
 	config := config.NewConfig()
 	dir := config.Images.HdPath
@@ -48,7 +48,7 @@ func (h *PhotoHnadler) ProcessImage(c *gin.Context) {
 	response.ResponseOK(c, "success")
 }
 
-func (h *PhotoHnadler) UploadPhoto(c *gin.Context) {
+func (h *PhotoHandler) UploadPhoto(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
@@ -68,7 +68,7 @@ func (h *PhotoHnadler) UploadPhoto(c *gin.Context) {
 	response.ResponseOK(c, photo)
 }
 
-func (h *PhotoHnadler) SaveFileToDisk(c *gin.Context) {
+func (h *PhotoHandler) SaveFileToDisk(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
