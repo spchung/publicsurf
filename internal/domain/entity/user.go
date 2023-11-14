@@ -4,14 +4,23 @@ import (
 	"public-surf/pkg/security"
 
 	"github.com/badoux/checkmail"
+	"gorm.io/datatypes"
 )
 
 type User struct {
-	ID        uint64 `gorm:"primary_key:auto_increment" json:"id" gorm:"column:beast_id"`
-	Email     string `gorm:"type:varchar(255)" json:"email" gorm:"column:email"`
-	Password  string `gorm:"type:varchar(255)" json:"password" gorm:"column:password"`
-	FirstName string `gorm:"type:varchar(255)" json:"first_name" gorm:"column:first_name"`
-	LastName  string `gorm:"type:varchar(255)" json:"last_name" gorm:"column:last_name"`
+	ID           uint64         `gorm:"primary_key:auto_increment" json:"id" gorm:"column:beast_id"`
+	Email        string         `gorm:"type:varchar(255)" json:"email" gorm:"column:email"`
+	Password     string         `gorm:"type:varchar(255)" json:"password" gorm:"column:password"`
+	FirstName    string         `gorm:"type:varchar(255)" json:"first_name" gorm:"column:first_name"`
+	LastName     string         `gorm:"type:varchar(255)" json:"last_name" gorm:"column:last_name"`
+	UserTypeID   uint64         `gorm:"type:varchar(255)" gorm:"foreignKey:UserTypeID" json:"user_type_id" gorm:"column:user_type_id"`
+	ThumbnailUrl string         `gorm:"type:varchar(255)" json:"thumbnail_url" gorm:"column:thumbnail_url"`
+	PaymentInfo  datatypes.JSON `gorm:"type:json" json:"payment_info" gorm:"column:payment_info"`
+}
+
+type UserType struct {
+	ID   uint64 `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
+	Name string `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 }
 
 type ReqisterViewModel struct {
