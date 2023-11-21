@@ -8,6 +8,7 @@ import (
 
 type Photo struct {
 	ID          uint64         `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
+	UUID        string         `gorm:"type:varchar(255)" json:"uuid" gorm:"column:uuid"`
 	UserID      uint64         `gorm:"type:varchar(255)" json:"user_id" gorm:"column:user_id"`
 	Name        string         `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	S3Path      string         `gorm:"type:varchar(255)" json:"s3_path" gorm:"column:s3_path"`

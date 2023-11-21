@@ -40,7 +40,7 @@ func (h *PhotoHandler) ProcessImage(c *gin.Context) {
 	config := config.NewConfig()
 	dir := config.Images.HdPath
 	imageName := "water.jpg"
-	err := h.photoService.GenerateImages(dir, imageName)
+	_, err := h.photoService.GenerateImages(dir, imageName)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return

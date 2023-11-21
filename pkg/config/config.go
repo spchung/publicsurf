@@ -29,7 +29,7 @@ type ImagesConfig struct {
 }
 
 type FilesConfig struct {
-	Path string
+	PublicBucket string
 }
 
 type JwtConfig struct {
@@ -39,7 +39,7 @@ type JwtConfig struct {
 func GetConfig() {
 	viper.SetConfigName("Config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("configurations")
+	viper.AddConfigPath("../../configurations")
 
 	err := viper.ReadInConfig()
 	if err != nil {
