@@ -29,7 +29,8 @@ type ImagesConfig struct {
 }
 
 type FilesConfig struct {
-	PublicBucket string
+	PublicBucket  string
+	PrivateBucket string
 }
 
 type JwtConfig struct {

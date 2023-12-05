@@ -1,6 +1,7 @@
 package api
 
 import (
+	"public-surf/api/middleware"
 	"public-surf/internal/domain/handler"
 	"public-surf/internal/domain/repository"
 	"public-surf/internal/domain/service"
@@ -27,12 +28,14 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	}
 
 	photoAPI := baseAPI.Group("/photo")
+	photoAPI.Use(middleware.AuthMiddleware())
 	photoService := service.NewPhotoService(userRepo, photoRepo)
 	photoHandler := handler.NewPhotoHandler(photoService)
 	{
-		photoAPI.POST("/upload", photoHandler.SaveFileToDisk)
+		// photoAPI.POST("/upload", photoHandler.UploadPhoto)
+		photoAPI.GET("/list", photoHandler.ListUserPhotos)
 		photoAPI.GET("/:id/uploader-name", photoHandler.GetPhotoUploaderName)
-		photoAPI.GET("/process", photoHandler.ProcessImage)
+		photoAPI.GET("/generate_upload", photoHandler.GenerateAndUploadImages)
 	}
 
 	authAPI := baseAPI.Group("/auth")

@@ -35,12 +35,12 @@ func (h *PhotoHandler) GetPhotoUploaderName(c *gin.Context) {
 	response.ResponseOK(c, name)
 }
 
-func (h *PhotoHandler) ProcessImage(c *gin.Context) {
+func (h *PhotoHandler) GenerateAndUploadImages(c *gin.Context) {
 
 	config := config.NewConfig()
 	dir := config.Images.HdPath
 	imageName := "water.jpg"
-	_, err := h.photoService.GenerateImages(dir, imageName)
+	_, err := h.photoService.GenerateAndUploadImages(dir, imageName)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
@@ -48,34 +48,15 @@ func (h *PhotoHandler) ProcessImage(c *gin.Context) {
 	response.ResponseOK(c, "success")
 }
 
-func (h *PhotoHandler) UploadPhoto(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusBadRequest)
+func (h *PhotoHandler) ListUserPhotos(c *gin.Context) {
+	// get user
+	userEmail, exists := c.Get("user_email")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
 		return
 	}
-	userID := c.PostForm("user_id")
-	id, err := strconv.Atoi(userID)
-	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusBadRequest)
-		return
-	}
-	photo, err := h.photoService.UploadPhoto(file, uint64(id))
-	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	response.ResponseOK(c, photo)
-}
 
-func (h *PhotoHandler) SaveFileToDisk(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusBadRequest)
-		return
-	}
-	config := config.NewConfig()
-	err = h.photoService.SaveFileToDisk(file, config.Images.HdPath, file.Filename)
+	_, err := h.photoService.ListUserPhotos(userEmail.(string))
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return

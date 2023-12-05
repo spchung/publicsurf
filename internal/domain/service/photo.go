@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"mime/multipart"
-	"os"
 	"public-surf/internal/domain/entity"
 	"public-surf/internal/domain/repository"
 	"public-surf/internal/utils"
+	"strings"
 	"sync"
 
 	"public-surf/pkg/aws_helper"
@@ -27,9 +25,10 @@ type PhotoService struct {
 
 type IPhotoService interface {
 	GetPhotoUploaderName(id uint64) (string, error)
-	GenerateImages(dir string, imageName string) (*entity.Photo, error)
-	UploadPhoto(file *multipart.FileHeader, userID uint64) (string, error)
-	SaveFileToDisk(file *multipart.FileHeader, dir string, fileName string) error
+	// GenerateImages(dir string, imageName string) (*entity.Photo, error)
+	// UploadPhoto(file *multipart.FileHeader, userID uint64) (string, error)
+	ListUserPhotos(userEmail string) ([]*entity.Photo, error)
+	GenerateAndUploadImages(dir string, imageName string) (*entity.Photo, error)
 }
 
 func NewPhotoService(userRepo repository.IUserRepository, photoRepo repository.IPhotoRepository) *PhotoService {
@@ -37,6 +36,18 @@ func NewPhotoService(userRepo repository.IUserRepository, photoRepo repository.I
 		userRepo:  userRepo,
 		photoRepo: photoRepo,
 	}
+}
+
+func (s *PhotoService) ListUserPhotos(userEmail string) ([]*entity.Photo, error) {
+	// get user
+	// user, err := s.userRepo.GetUser(uint64(userID))
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	fmt.Println(userEmail)
+
+	return nil, nil
 }
 
 func (s *PhotoService) GetPhotoUploaderName(photoID uint64) (string, error) {
@@ -51,25 +62,64 @@ func (s *PhotoService) GetPhotoUploaderName(photoID uint64) (string, error) {
 	return user.FirstName + " " + user.LastName, nil
 }
 
-func (s *PhotoService) uploadImage(imageBytes []byte, photoUuid string, imageName string) error {
+// uploads to the public bucket - "public-surf"
+func (s *PhotoService) uploadImagePublic(imageBytes []byte, photoUuid string, imageName string) (string, error) {
 	config := config.NewConfig()
 
+	return s.uploadImage(config.Files.PublicBucket, imageBytes, photoUuid, imageName)
+}
+
+func (s *PhotoService) uploadImagePivate(imageBytes []byte, photoUuid string, imageName string) (string, error) {
+	config := config.NewConfig()
+	return s.uploadImage(config.Files.PrivateBucket, imageBytes, photoUuid, imageName)
+}
+
+func (s *PhotoService) uploadImage(bucket string, imageBytes []byte, photoUuid string, imageName string) (string, error) {
 	s3Client := aws_helper.NewAwsS3Client()
 
+	dir := fmt.Sprintf("images/%s/%s", photoUuid, imageName)
 	_, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-		Bucket: aws.String(config.Files.PublicBucket),
-		Key:    aws.String(fmt.Sprintf("images/%s/%s", photoUuid, imageName)),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(dir),
 		Body:   bytes.NewReader(imageBytes),
 	})
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", err
 	}
-	return nil
+	return strings.Join([]string{bucket, dir}, "/"), nil
 }
 
-// generate thumbnails and regular sized photos
-func (s *PhotoService) GenerateImages(dir string, imageName string) (*entity.Photo, error) {
+// sub routines for process different image sizes
+func (s *PhotoService) generateThumbnail(imageBytes []byte) ([]byte, error) {
+	thumbnailBytes, err := utils.ResizeImg(imageBytes, 165, 165)
+	if err != nil {
+		return nil, err
+	}
+	thumbnailBytes, err = utils.WaterMark(thumbnailBytes, nil)
+	if err != nil {
+		return nil, err
+	}
+	return thumbnailBytes, nil
+}
+
+func (s *PhotoService) generateMedium(imageBytes []byte) ([]byte, error) {
+	mediumBytes, err := utils.ResizeImg(imageBytes, 600, 600)
+	if err != nil {
+		return nil, err
+	}
+	mediumBytes, err = utils.WaterMark(mediumBytes, nil)
+	if err != nil {
+		return nil, err
+	}
+	return mediumBytes, nil
+}
+
+// generate thumbnails and regular sized images and upload with original
+func (s *PhotoService) GenerateAndUploadImages(dir string, imageName string) (*entity.Photo, error) {
+
+	uploadCompleteChan := make(chan string, 3)
+	errorChan := make(chan error, 3)
 
 	// init a uuid for images to use as db photo uuid and s3 direcotry name
 	uuid := uuid.New().String()
@@ -79,47 +129,80 @@ func (s *PhotoService) GenerateImages(dir string, imageName string) (*entity.Pho
 		return nil, err
 	}
 
-	wg.Add(2)
-	go func() error {
+	wg.Add(3)
+	// thumbnail
+	go func() {
 		defer wg.Done()
 
 		// generate thumbnails
-		thumbnailBytes, err := utils.ResizeImg(imageBytes, 165, 165)
+		thumbnailBytes, err := s.generateThumbnail(imageBytes)
 		if err != nil {
-			return err
+			errorChan <- err
+			return
 		}
-		thumbnailBytes, err = utils.WaterMark(thumbnailBytes, nil)
-		if err != nil {
-			return err
-		}
+
 		thumbnailName := "thumbnail_" + imageName
-		err = s.uploadImage(thumbnailBytes, uuid, thumbnailName)
+		s3_path, err := s.uploadImagePublic(thumbnailBytes, uuid, thumbnailName)
 		if err != nil {
-			return err
+			errorChan <- err
+			return
 		}
-		return nil
+		uploadCompleteChan <- s3_path
 	}()
 
-	go func() error {
+	// medium sized image
+	go func() {
 		defer wg.Done()
-		mediumBytes, err := utils.ResizeImg(imageBytes, 600, 600)
+		mediumBytes, err := s.generateMedium(imageBytes)
 		if err != nil {
-			return err
-		}
-		mediumBytes, err = utils.WaterMark(mediumBytes, nil)
-		if err != nil {
-			return err
+			errorChan <- err
+			return
 		}
 		regularName := "regular_" + imageName
-		err = s.uploadImage(mediumBytes, uuid, regularName)
+		s3_path, err := s.uploadImagePublic(mediumBytes, uuid, regularName)
 		if err != nil {
-			return err
+			errorChan <- err
+			return
 		}
-		return nil
+		uploadCompleteChan <- s3_path
+	}()
+
+	// original image - private bucket
+	go func() {
+		defer wg.Done()
+		s3_path, err := s.uploadImagePivate(imageBytes, uuid, imageName)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		uploadCompleteChan <- s3_path
+	}()
+
+	// listen for errors and upload complete
+	errorList := []string{}
+	successUrls := []string{}
+	go func() {
+		for {
+			select {
+			case err, ok := <-errorChan:
+				if !ok {
+					return
+				}
+				// add to error logs
+				errorList = append(errorList, err.Error())
+			case res, ok := <-uploadCompleteChan:
+				if !ok {
+					return
+				}
+				// add to database
+				successUrls = append(successUrls, res)
+			}
+		}
 	}()
 
 	// TODO: make sure no upload errors
 	wg.Wait()
+
 	// save to database
 	photo := repository.NewPhoto()
 	photo.UUID = uuid
@@ -128,39 +211,4 @@ func (s *PhotoService) GenerateImages(dir string, imageName string) (*entity.Pho
 	savedPhoto, err := s.photoRepo.Save(photo)
 
 	return savedPhoto, nil
-}
-
-func (s *PhotoService) UploadPhoto(file *multipart.FileHeader, userID uint64) (string, error) {
-	// upload photo to s3
-	// save photo to db
-	return "path", nil
-}
-
-func (s *PhotoService) SaveFileToDisk(file *multipart.FileHeader, dir string, fileName string) error {
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	// Destination
-	dest := dir + fileName
-	dst, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	// Copy
-	if _, err = io.Copy(dst, src); err != nil {
-		return err
-	}
-
-	// generate images
-	_, err = s.GenerateImages(dir, fileName)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

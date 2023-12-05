@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-
 type TokenDetail struct {
 	AccessToken  string
 	ExpiredToken int64
@@ -21,13 +20,13 @@ type AccessDetail struct {
 	Authorized bool
 }
 
-func CreateToken(userid int64) (*TokenDetail, error) {
+func CreateToken(userEmail string) (*TokenDetail, error) {
 	td := &TokenDetail{}
-	td.ExpiredToken = time.Now().Add(time.Minute*15).Unix()
+	td.ExpiredToken = time.Now().Add(time.Hour * 100).Unix()
 	var err error
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
-	atClaims["user_id"]	= userid
+	atClaims["user_email"] = userEmail
 	atClaims["exp"] = td.ExpiredToken
 
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -39,7 +38,7 @@ func CreateToken(userid int64) (*TokenDetail, error) {
 	return td, nil
 }
 
-func ExtractToken(r *http.Request) string  {
+func ExtractToken(r *http.Request) string {
 	token := r.Header.Get("Authorization")
 	strArr := strings.Split(token, " ")
 	if len(strArr) == 2 {
@@ -48,7 +47,7 @@ func ExtractToken(r *http.Request) string  {
 	return ""
 }
 
-func VerifyToken(r *http.Request) (*jwt.Token, error)  {
+func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -70,14 +69,14 @@ func TokenValid(r *http.Request) error {
 		return err
 	}
 
-	if _,ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
 		return err
 	}
 
 	return nil
 }
 
-func ExtractTokenMetadata(r *http.Request) (*AccessDetail, error)  {
+func ExtractTokenMetadata(r *http.Request) (*AccessDetail, error) {
 	token, err := VerifyToken(r)
 	if err != nil {
 		return nil, err
