@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"public-surf/internal/domain/repository"
 	"public-surf/pkg/jwttoken"
 	"public-surf/pkg/response"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 )
 
 type Claims struct {
@@ -16,7 +18,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		var jwtSecret = []byte(viper.GetString("Jwt.Secret"))
@@ -27,9 +29,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
-		// decode
-		// claims, err := jwttoken.ExtractTokenMetadata(c.Request)
 		parts := strings.Split(c.Request.Header.Get("Authorization"), " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
@@ -65,11 +64,58 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func IsSignedIn() gin.HandlerFunc {
+func IsCreatorMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := jwttoken.ExtractTokenMetadata(c.Request)
+		// get user
+		var jwtSecret = []byte(viper.GetString("Jwt.Secret"))
+
+		err := jwttoken.TokenValid(c.Request)
 		if err != nil {
 			response.ResponseError(c, err.Error(), http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+		parts := strings.Split(c.Request.Header.Get("Authorization"), " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+			c.Abort()
+			return
+		}
+
+		tokenString := parts[1]
+
+		claims := &Claims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+
+		if err != nil {
+			if err == jwt.ErrSignatureInvalid {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token signature"})
+				c.Abort()
+				return
+			}
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		if !token.Valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		// get user
+		userRepo := repository.NewUserRepository(db)
+		user, err := userRepo.GetUserByEmail(claims.Email)
+		if err != nil {
+			response.ResponseError(c, err.Error(), http.StatusInternalServerError)
+			c.Abort()
+			return
+		}
+		if user.UserTypeID != 1 {
+			response.ResponseError(c, "User is not a creator", http.StatusForbidden)
 			c.Abort()
 			return
 		}

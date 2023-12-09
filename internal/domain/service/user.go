@@ -3,7 +3,6 @@ package service
 import (
 	"public-surf/internal/domain/entity"
 	"public-surf/internal/domain/repository"
-	"strconv"
 )
 
 type UserService struct {
@@ -27,7 +26,7 @@ func (s *UserService) GetUserPhotoCount(userID uint64) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	photos, err := s.photoRepo.FindByUserID(strconv.Itoa(int(user.ID)))
+	photos, err := s.photoRepo.FindByUserID(user.ID)
 	if err != nil {
 		return 0, err
 	}

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"strings"
+	"time"
 
 	"gorm.io/datatypes"
 )
@@ -13,8 +14,12 @@ type Photo struct {
 	Name        string         `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	S3Path      string         `gorm:"type:varchar(255)" json:"s3_path" gorm:"column:s3_path"`
 	FolderID    string         `gorm:"type:varchar(255)" json:"folder_id" gorm:"column:folder_id"`
+	PhotoTypeID uint64         `gorm:"type:varchar(255)" json:"photo_type_id" gorm:"column:photo_type_id"`
 	Metadata    datatypes.JSON `gorm:"type:json" json:"metadata" gorm:"column:metadata"`
 	PricingData datatypes.JSON `gorm:"type:json" json:"pricing_data" gorm:"column:pricing_data"`
+	CreatedAt   *time.Time     `gorm:"type:timestamp" json:"created_at" gorm:"column:created_at default:null"`
+	UpdatedAt   *time.Time     `gorm:"type:timestamp" json:"updated_at" gorm:"column:updated_at default:null"`
+	DeletedAt   *time.Time     `gorm:"type:timestamp" json:"deleted_at" gorm:"column:deleted_at default:null"`
 }
 
 type PhotoFolder struct {

@@ -11,13 +11,10 @@ type PhotoRepository struct {
 }
 
 type IPhotoRepository interface {
-	// FindAll() ([]entity.Photo, error)
 	FindByID(id uint64) (entity.Photo, error)
-	FindByUserID(userID string) ([]entity.Photo, error)
+	FindByUserID(userID uint64) ([]*entity.Photo, error)
 	FindLatestByUserID(userID uint64) (entity.PhotoViewModel, error)
 	Save(photo *entity.Photo) (*entity.Photo, error)
-	// Update(photo entity.Photo) (entity.Photo, error)
-	// Delete(photo entity.Photo) (bool, error)
 }
 
 func NewPhotoRepository(db *gorm.DB) *PhotoRepository {
@@ -34,8 +31,8 @@ func (r *PhotoRepository) FindByID(id uint64) (entity.Photo, error) {
 	return photo, err
 }
 
-func (r *PhotoRepository) FindByUserID(userID string) ([]entity.Photo, error) {
-	var photos []entity.Photo
+func (r *PhotoRepository) FindByUserID(userID uint64) ([]*entity.Photo, error) {
+	var photos []*entity.Photo
 	err := r.db.Where("user_id = ?", userID).Find(&photos).Error
 	return photos, err
 }
