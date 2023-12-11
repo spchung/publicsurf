@@ -33,6 +33,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	photoHandler := handler.NewPhotoHandler(photoService)
 	{
 		photoAPI.GET("/list/:user_id", photoHandler.ListUserPhotos)
+		photoAPI.GET("/:id", photoHandler.GetPhoto)
 	}
 
 	creatorAPI := baseAPI.Group("/creator")

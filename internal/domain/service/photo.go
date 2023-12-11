@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"public-surf/internal/domain/entity"
 	"public-surf/internal/domain/repository"
@@ -30,7 +30,7 @@ type IPhotoService interface {
 	GetPhotoUploaderName(id uint64) (string, error)
 	ListUserPhotos(userEmail string) ([]*entity.Photo, error)
 	GenerateAndUploadImages(file *multipart.FileHeader, imageName string) ([]*entity.Photo, error)
-	GetPhoto(id uint64) (*entity.Photo, error)
+	GetPhoto(id uint64) (*entity.PhotoView, error)
 }
 
 func NewPhotoService(userRepo repository.IUserRepository, photoRepo repository.IPhotoRepository) *PhotoService {
@@ -58,7 +58,7 @@ func (s *PhotoService) ListUserPhotos(userEmail string) ([]*entity.Photo, error)
 }
 
 func (s *PhotoService) GetPhotoUploaderName(photoID uint64) (string, error) {
-	photo, err := s.photoRepo.FindByID(photoID)
+	photo, err := s.photoRepo.GetByID(photoID)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +83,7 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 	}
 	defer src.Close()
 
-	imageBytes, err := ioutil.ReadAll(src)
+	imageBytes, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
@@ -202,8 +202,8 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 	return successfulPhotos, nil
 }
 
-func (s *PhotoService) GetPhoto(id uint64) (*entity.Photo, error) {
-	photo, err := s.photoRepo.FindByID(id)
+func (s *PhotoService) GetPhoto(id uint64) (*entity.PhotoView, error) {
+	photo, err := s.photoRepo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

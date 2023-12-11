@@ -11,7 +11,7 @@ type PhotoRepository struct {
 }
 
 type IPhotoRepository interface {
-	FindByID(id uint64) (entity.Photo, error)
+	GetByID(id uint64) (entity.PhotoView, error)
 	FindByUserID(userID uint64) ([]*entity.Photo, error)
 	FindLatestByUserID(userID uint64) (entity.PhotoViewModel, error)
 	Save(photo *entity.Photo) (*entity.Photo, error)
@@ -25,8 +25,8 @@ func NewPhoto() *entity.Photo {
 	return &entity.Photo{}
 }
 
-func (r *PhotoRepository) FindByID(id uint64) (entity.Photo, error) {
-	var photo entity.Photo
+func (r *PhotoRepository) GetByID(id uint64) (entity.PhotoView, error) {
+	var photo entity.PhotoView
 	err := r.db.First(&photo, id).Error
 	return photo, err
 }

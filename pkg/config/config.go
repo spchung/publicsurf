@@ -40,7 +40,7 @@ type JwtConfig struct {
 func GetConfig() {
 	viper.SetConfigName("Config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("../../configurations")
+	viper.AddConfigPath("/Users/stephen/Dev/public_surf/backend/configurations")
 
 	err := viper.ReadInConfig()
 	if err != nil {

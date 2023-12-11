@@ -13,7 +13,7 @@ type User struct {
 	Password     string         `gorm:"type:varchar(255)" json:"password" gorm:"column:password"`
 	FirstName    string         `gorm:"type:varchar(255)" json:"first_name" gorm:"column:first_name"`
 	LastName     string         `gorm:"type:varchar(255)" json:"last_name" gorm:"column:last_name"`
-	UserTypeID   uint64         `gorm:"type:varchar(255)" gorm:"foreignKey:UserTypeID" json:"user_type_id" gorm:"column:user_type_id"`
+	UserTypeID   uint64         `gorm:"type:int4" gorm:"foreignKey:UserTypeID" json:"user_type_id" gorm:"column:user_type_id"`
 	ThumbnailUrl string         `gorm:"type:varchar(255)" json:"thumbnail_url" gorm:"column:thumbnail_url"`
 	PaymentInfo  datatypes.JSON `gorm:"type:json" json:"payment_info" gorm:"column:payment_info"`
 }
