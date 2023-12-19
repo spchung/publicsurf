@@ -3,10 +3,12 @@ package handler
 import (
 	"net/http"
 	"public-surf/internal/domain/service"
+	"public-surf/internal/logger"
 	"public-surf/pkg/response"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type UserHandler struct {
@@ -29,12 +31,14 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.Atoi(userID)
 	if err != nil {
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
 	user, err := h.userService.GetUser(id)
 	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
+		response.ResponseError(c, err.Error(), http.StatusNotFound)
 		return
 	}
 	response.ResponseOKWithData(c, user)
@@ -44,11 +48,13 @@ func (h *UserHandler) GetUserPhotoCount(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.Atoi(userID)
 	if err != nil {
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
 	count, err := h.userService.GetUserPhotoCount(id)
 	if err != nil {
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -59,11 +65,13 @@ func (h *UserHandler) GetUserLatestPhoto(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.Atoi(userID)
 	if err != nil {
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
 	photo, err := h.userService.GetUserLatestPhoto(id)
 	if err != nil {
+		logger.Logger.Error("error - GetUser handler", zap.Error(err))
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
 	}

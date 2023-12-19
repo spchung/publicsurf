@@ -3,11 +3,8 @@ package main
 import (
 	"log"
 	"public-surf/api"
-	"public-surf/internal/logger"
 	"public-surf/pkg/config"
 	"public-surf/pkg/database"
-
-	"go.uber.org/zap"
 )
 
 func init() {
@@ -16,10 +13,6 @@ func init() {
 
 // @BasePath /api/v1
 func main() {
-	logger := logger.NewLogger()
-	zap.ReplaceGlobals(logger)
-	defer logger.Sync()
-
 	db, err := database.InitDB()
 	if err != nil {
 		log.Fatal(err)

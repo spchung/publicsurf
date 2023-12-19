@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var Logger *zap.Logger
+
 func NewLogger() *zap.Logger {
 	now := time.Now().UTC()
 	w := zapcore.AddSync(&lumberjack.Logger{
@@ -19,6 +21,15 @@ func NewLogger() *zap.Logger {
 		MaxAge:     30,
 	})
 	encodeConfig := zap.NewProductionEncoderConfig()
+	encodeConfig = zapcore.EncoderConfig{
+		MessageKey:   "message",
+		LevelKey:     "level",
+		EncodeLevel:  zapcore.LowercaseLevelEncoder,
+		TimeKey:      "timestamp",
+		EncodeTime:   zapcore.ISO8601TimeEncoder,
+		CallerKey:    "caller",
+		EncodeCaller: zapcore.FullCallerEncoder,
+	}
 	encodeConfig.TimeKey = "time"
 	encodeConfig.EncodeTime = zapcore.RFC3339TimeEncoder
 	encodeConfig.EncodeLevel = zapcore.CapitalLevelEncoder
@@ -30,4 +41,8 @@ func NewLogger() *zap.Logger {
 	)
 
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
+}
+
+func init() {
+	Logger = NewLogger()
 }
