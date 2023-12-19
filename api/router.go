@@ -13,6 +13,16 @@ import (
 func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	router := gin.Default()
+
+	health := router.Group("/health")
+	{
+		health.GET("/", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"message": "OK",
+			})
+		})
+	}
+
 	//Register repository
 	userRepo := repository.NewUserRepository(db)
 	photoRepo := repository.NewPhotoRepository(db)

@@ -41,7 +41,6 @@ func (h *PhotoHandler) GenerateAndUploadImages(c *gin.Context) {
 }
 
 func (h *PhotoHandler) ListUserPhotos(c *gin.Context) {
-	// get user
 	userEmail, exists := c.Get("user_email")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})

@@ -1,0 +1,24 @@
+App:
+  Port: 8080
+  Env: "dev"
+
+Database:
+  Host: "db"
+  Port: 5432
+  Username: "postgres"
+  Password: "postgres"
+  DBName: "postgres"
+
+Files:
+  PublicBucket: "public-surf"
+  PrivateBucket: "private-surf"
+
+Images:
+  BaseDir: "/Users/stephen/Dev/public_surf/backend/images/"
+  HdPath: "/Users/stephen/Dev/public_surf/backend/images/hd/"
+  RegularPath: "/Users/stephen/Dev/public_surf/backend/images/regular/"
+  ThumbnailPath: "/Users/stephen/Dev/public_surf/backend/images/thumbnail/"
+
+
+Jwt:
+  Secret: "q1w7e3r5t5y9"

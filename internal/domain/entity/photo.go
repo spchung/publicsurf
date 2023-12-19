@@ -13,7 +13,7 @@ type Photo struct {
 	UserID      uint64         `gorm:"type:int4" json:"user_id" gorm:"column:user_id"`
 	Name        string         `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	S3Path      string         `gorm:"type:varchar(255)" json:"s3_path" gorm:"column:s3_path"`
-	FolderID    uint64         `gorm:"type:int4" json:"folder_id" gorm:"column:folder_id"`
+	FolderID    *uint64        `gorm:"type:int4" json:"folder_id" gorm:"column:folder_id default:null"`
 	PhotoTypeID uint64         `gorm:"type:int4" json:"photo_type_id" gorm:"column:photo_type_id"`
 	Metadata    datatypes.JSON `gorm:"type:json" json:"metadata" gorm:"column:metadata"`
 	PricingData datatypes.JSON `gorm:"type:json" json:"pricing_data" gorm:"column:pricing_data"`

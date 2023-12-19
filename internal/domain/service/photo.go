@@ -52,8 +52,6 @@ func (s *PhotoService) ListUserPhotos(userEmail string) ([]*entity.Photo, error)
 		return nil, err
 	}
 
-	fmt.Println(userEmail)
-
 	return photos, nil
 }
 
