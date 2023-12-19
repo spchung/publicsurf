@@ -12,15 +12,17 @@ import (
 
 type PhotoHandler struct {
 	photoService service.IPhotoService
+	userService  service.IUserService
 }
 
 type UploadPhotoRequest struct {
 	Name string `json:"name"`
 }
 
-func NewPhotoHandler(photoService service.IPhotoService) *PhotoHandler {
+func NewPhotoHandler(photoService service.IPhotoService, userService service.IUserService) *PhotoHandler {
 	var photoHandler = PhotoHandler{}
 	photoHandler.photoService = photoService
+	photoHandler.userService = userService
 	return &photoHandler
 }
 
@@ -41,13 +43,21 @@ func (h *PhotoHandler) GenerateAndUploadImages(c *gin.Context) {
 }
 
 func (h *PhotoHandler) ListUserPhotos(c *gin.Context) {
-	userEmail, exists := c.Get("user_email")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
+	param := c.Param("user_id")
+
+	userID, err := strconv.Atoi(param)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
-	photos, err := h.photoService.ListUserPhotos(userEmail.(string))
+	_, err = h.userService.GetUser(userID)
+	if err != nil {
+		response.ResponseNotFound(c, "User not found")
+		return
+	}
+
+	photos, err := h.photoService.ListUserPhotos(userID)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,7 +78,7 @@ func (h *PhotoHandler) ListUserPhotos(c *gin.Context) {
 func (h *PhotoHandler) GetPhoto(c *gin.Context) {
 	photoID := c.Param("id")
 	// convert string to uint64
-	photoIDUint, err := strconv.ParseUint(photoID, 10, 64)
+	photoIDUint, err := strconv.Atoi(photoID)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return

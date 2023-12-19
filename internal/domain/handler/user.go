@@ -32,7 +32,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := h.userService.GetUser(uint64(id))
+	user, err := h.userService.GetUser(id)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,17 +47,12 @@ func (h *UserHandler) GetUserPhotoCount(c *gin.Context) {
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
-	count, err := h.userService.GetUserPhotoCount(uint64(id))
+	count, err := h.userService.GetUserPhotoCount(id)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	countStr := strconv.FormatInt(count, 10)
-	if err != nil {
-		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	response.ResponseOK(c, countStr)
+	response.ResponseOKWithData(c, count)
 }
 
 func (h *UserHandler) GetUserLatestPhoto(c *gin.Context) {
@@ -67,7 +62,7 @@ func (h *UserHandler) GetUserLatestPhoto(c *gin.Context) {
 		response.ResponseError(c, err.Error(), http.StatusBadRequest)
 		return
 	}
-	photo, err := h.userService.GetUserLatestPhoto(uint64(id))
+	photo, err := h.userService.GetUserLatestPhoto(id)
 	if err != nil {
 		response.ResponseError(c, err.Error(), http.StatusInternalServerError)
 		return

@@ -12,7 +12,7 @@ type UserRepository struct {
 
 type IUserRepository interface {
 	// FindAll() ([]entity.User, error)
-	GetUser(id uint64) (entity.User, error)
+	GetUser(id int) (entity.User, error)
 	GetUserByEmail(email string) (entity.User, error)
 	// Store(user entity.User) (entity.User, error)
 	// Update(user entity.User) (entity.User, error)
@@ -23,7 +23,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) GetUser(id uint64) (entity.User, error) {
+func (r *UserRepository) GetUser(id int) (entity.User, error) {
 	var user entity.User
 	err := r.db.First(&user, id).Error
 	return user, err

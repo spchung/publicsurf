@@ -21,7 +21,7 @@ func TestUserService_GetUser(t *testing.T) {
 		photoRepo repository.IPhotoRepository
 	}
 	type args struct {
-		id uint64
+		id int
 	}
 	tests := []struct {
 		name    string

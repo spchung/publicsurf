@@ -11,9 +11,9 @@ type UserService struct {
 }
 
 type IUserService interface {
-	GetUserPhotoCount(id uint64) (int64, error)
-	GetUserLatestPhoto(id uint64) (entity.PhotoViewModel, error)
-	GetUser(id uint64) (entity.UserViewModel, error)
+	GetUserPhotoCount(id int) (int, error)
+	GetUserLatestPhoto(id int) (entity.PhotoViewModel, error)
+	GetUser(id int) (entity.UserViewModel, error)
 	GetUserByEmail(email string) (entity.User, error)
 }
 
@@ -21,7 +21,7 @@ func NewUserService(userRepo repository.IUserRepository, photoRepo repository.IP
 	return &UserService{userRepo: userRepo, photoRepo: photoRepo}
 }
 
-func (s *UserService) GetUserPhotoCount(userID uint64) (int64, error) {
+func (s *UserService) GetUserPhotoCount(userID int) (int, error) {
 	user, err := s.userRepo.GetUser(userID)
 	if err != nil {
 		return 0, err
@@ -30,10 +30,10 @@ func (s *UserService) GetUserPhotoCount(userID uint64) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int64(len(photos)), nil
+	return len(photos), nil
 }
 
-func (s *UserService) GetUser(id uint64) (entity.UserViewModel, error) {
+func (s *UserService) GetUser(id int) (entity.UserViewModel, error) {
 	user, err := s.userRepo.GetUser(id)
 	if err != nil {
 		return entity.UserViewModel{}, err
@@ -46,7 +46,7 @@ func (s *UserService) GetUser(id uint64) (entity.UserViewModel, error) {
 	}, nil
 }
 
-func (s *UserService) GetUserLatestPhoto(userID uint64) (entity.PhotoViewModel, error) {
+func (s *UserService) GetUserLatestPhoto(userID int) (entity.PhotoViewModel, error) {
 	user, err := s.userRepo.GetUser(userID)
 	if err != nil {
 		return entity.PhotoViewModel{}, err

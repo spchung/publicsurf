@@ -40,7 +40,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	photoAPI := baseAPI.Group("/photo")
 	photoAPI.Use(middleware.AuthMiddleware(db))
 	photoService := service.NewPhotoService(userRepo, photoRepo)
-	photoHandler := handler.NewPhotoHandler(photoService)
+	photoHandler := handler.NewPhotoHandler(photoService, userService)
 	{
 		photoAPI.GET("/list/:user_id", photoHandler.ListUserPhotos)
 		photoAPI.GET("/:id", photoHandler.GetPhoto)

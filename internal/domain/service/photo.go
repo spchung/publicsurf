@@ -27,10 +27,10 @@ type PhotoService struct {
 }
 
 type IPhotoService interface {
-	GetPhotoUploaderName(id uint64) (string, error)
-	ListUserPhotos(userEmail string) ([]*entity.Photo, error)
+	GetPhotoUploaderName(id int) (string, error)
+	ListUserPhotos(userEmail int) ([]*entity.Photo, error)
 	GenerateAndUploadImages(file *multipart.FileHeader, imageName string) ([]*entity.Photo, error)
-	GetPhoto(id uint64) (*entity.PhotoView, error)
+	GetPhoto(id int) (*entity.PhotoView, error)
 }
 
 func NewPhotoService(userRepo repository.IUserRepository, photoRepo repository.IPhotoRepository) *PhotoService {
@@ -40,14 +40,8 @@ func NewPhotoService(userRepo repository.IUserRepository, photoRepo repository.I
 	}
 }
 
-func (s *PhotoService) ListUserPhotos(userEmail string) ([]*entity.Photo, error) {
-	// get user
-	user, err := s.userRepo.GetUserByEmail(userEmail)
-	if err != nil {
-		return nil, err
-	}
-
-	photos, err := s.photoRepo.FindByUserID(user.ID)
+func (s *PhotoService) ListUserPhotos(userID int) ([]*entity.Photo, error) {
+	photos, err := s.photoRepo.FindByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +49,7 @@ func (s *PhotoService) ListUserPhotos(userEmail string) ([]*entity.Photo, error)
 	return photos, nil
 }
 
-func (s *PhotoService) GetPhotoUploaderName(photoID uint64) (string, error) {
+func (s *PhotoService) GetPhotoUploaderName(photoID int) (string, error) {
 	photo, err := s.photoRepo.GetByID(photoID)
 	if err != nil {
 		return "", err
@@ -200,7 +194,7 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 	return successfulPhotos, nil
 }
 
-func (s *PhotoService) GetPhoto(id uint64) (*entity.PhotoView, error) {
+func (s *PhotoService) GetPhoto(id int) (*entity.PhotoView, error) {
 	photo, err := s.photoRepo.GetByID(id)
 	if err != nil {
 		return nil, err

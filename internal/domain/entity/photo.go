@@ -8,13 +8,13 @@ import (
 )
 
 type Photo struct {
-	ID          uint64         `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
+	ID          int            `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
 	UUID        string         `gorm:"type:varchar(255)" json:"uuid" gorm:"column:uuid"`
-	UserID      uint64         `gorm:"type:int4" json:"user_id" gorm:"column:user_id"`
+	UserID      int            `gorm:"type:int4" json:"user_id" gorm:"column:user_id"`
 	Name        string         `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	S3Path      string         `gorm:"type:varchar(255)" json:"s3_path" gorm:"column:s3_path"`
-	FolderID    *uint64        `gorm:"type:int4" json:"folder_id" gorm:"column:folder_id default:null"`
-	PhotoTypeID uint64         `gorm:"type:int4" json:"photo_type_id" gorm:"column:photo_type_id"`
+	FolderID    *int           `gorm:"type:int4" json:"folder_id" gorm:"column:folder_id default:null"`
+	PhotoTypeID int            `gorm:"type:int4" json:"photo_type_id" gorm:"column:photo_type_id"`
 	Metadata    datatypes.JSON `gorm:"type:json" json:"metadata" gorm:"column:metadata"`
 	PricingData datatypes.JSON `gorm:"type:json" json:"pricing_data" gorm:"column:pricing_data"`
 	CreatedAt   *time.Time     `gorm:"type:timestamp" json:"created_at" gorm:"column:created_at default:null"`
@@ -23,14 +23,14 @@ type Photo struct {
 }
 
 type PhotoView struct {
-	ID          uint64         `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
+	ID          int            `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
 	UUID        string         `gorm:"type:varchar(255)" json:"uuid" gorm:"column:uuid"`
-	UserID      uint64         `gorm:"type:int4" json:"user_id" gorm:"column:user_id"`
+	UserID      int            `gorm:"type:int4" json:"user_id" gorm:"column:user_id"`
 	UserEmail   string         `gorm:"type:varchar(255)" json:"user_email" gorm:"column:user_email"`
 	Name        string         `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	S3Path      string         `gorm:"type:varchar(255)" json:"s3_path" gorm:"column:s3_path"`
 	FolderID    string         `gorm:"type:int4" json:"folder_id" gorm:"column:folder_id"`
-	PhotoTypeID uint64         `gorm:"type:int4" json:"photo_type_id" gorm:"column:photo_type_id"`
+	PhotoTypeID int            `gorm:"type:int4" json:"photo_type_id" gorm:"column:photo_type_id"`
 	PhotoType   string         `gorm:"type:varchar(255)" json:"photo_type" gorm:"column:photo_type"`
 	Metadata    datatypes.JSON `gorm:"type:json" json:"metadata" gorm:"column:metadata"`
 	PricingData datatypes.JSON `gorm:"type:json" json:"pricing_data" gorm:"column:pricing_data"`
@@ -44,14 +44,14 @@ func (p *PhotoView) TableName() string {
 }
 
 type PhotoFolder struct {
-	ID          uint64 `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
+	ID          int    `gorm:"primary_key:auto_increment" json:"id" gorm:"column:id"`
 	Name        string `gorm:"type:varchar(255)" json:"name" gorm:"column:name"`
 	Description string `gorm:"type:varchar(255)" json:"description" gorm:"column:description"`
 }
 
 type PhotoViewModel struct {
-	ID     uint64 `json:"id"`
-	UserID uint64 `json:"user_id"`
+	ID     int    `json:"id"`
+	UserID int    `json:"user_id"`
 	Name   string `json:"name"`
 	S3Path string `json:"s3_path"`
 	URL    string `json:"url"`
