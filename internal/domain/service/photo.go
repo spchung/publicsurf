@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"public-surf/internal/domain/entity"
 	"public-surf/internal/domain/repository"
+	"public-surf/internal/logger"
 	"public-surf/internal/utils"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type PhotoService struct {
@@ -76,10 +78,6 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 	defer src.Close()
 
 	imageBytes, err := io.ReadAll(src)
-	if err != nil {
-		return nil, err
-	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -173,9 +171,6 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 		successfulPhotos = append(successfulPhotos, savedPhoto)
 	}()
 
-	// listen for errors and upload complete
-	// errorList := []string{}
-
 	go func() {
 		for {
 			select {
@@ -183,7 +178,7 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 				if !ok {
 					return
 				}
-				fmt.Println(err)
+				logger.Logger.Error("error - GenerateAndUploadImages", zap.Error(err))
 			}
 		}
 	}()
@@ -224,7 +219,7 @@ func (s *PhotoService) uploadImage(bucket string, imageBytes []byte, photoUuid s
 		Body:   bytes.NewReader(imageBytes),
 	})
 	if err != nil {
-		fmt.Println(err)
+		logger.Logger.Error("error - uploadImage", zap.Error(err))
 		return "", err
 	}
 	return strings.Join([]string{bucket, dir}, "/"), nil
