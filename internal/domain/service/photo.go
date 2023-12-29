@@ -214,9 +214,10 @@ func (s *PhotoService) uploadImage(bucket string, imageBytes []byte, photoUuid s
 
 	dir := fmt.Sprintf("images/%s/%s", photoUuid, imageName)
 	_, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(dir),
-		Body:   bytes.NewReader(imageBytes),
+		Bucket:      aws.String(bucket),
+		Key:         aws.String(dir),
+		Body:        bytes.NewReader(imageBytes),
+		ContentType: aws.String("image/jpeg"),
 	})
 	if err != nil {
 		logger.Logger.Error("error - uploadImage", zap.Error(err))
