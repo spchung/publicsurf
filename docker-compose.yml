@@ -21,12 +21,13 @@ services:
     networks:
       - localnetwork
     build:
-      context: ./backend
       dockerfile: Dockerfile
     ports:
       - 8080:8080
     depends_on:
       - db
+    volumes:
+      - ~/.aws:/root/.aws
 
 networks:
   localnetwork:
