@@ -28,6 +28,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	photoRepo := repository.NewPhotoRepository(db)
 
 	baseAPI := router.Group("/v1")
+	baseAPI.Use(middleware.CORSMiddleware())
 	userAPI := baseAPI.Group("/user")
 	userService := service.NewUserService(userRepo, photoRepo)
 	userHandler := handler.NewUserHandler(userService)
