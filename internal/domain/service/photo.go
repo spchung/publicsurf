@@ -17,6 +17,7 @@ import (
 	"public-surf/pkg/aws_helper"
 	"public-surf/pkg/config"
 
+	"github.com/avast/retry-go"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
@@ -65,11 +66,6 @@ func (s *PhotoService) GetPhotoUploaderName(photoID int) (string, error) {
 
 func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, imageName string) ([]*entity.Photo, error) {
 	// uploadCompleteChan := make(chan *entity.Photo, 3)
-	errorChan := make(chan error, 3)
-
-	// init a uuid for images to use as db photo uuid and s3 direcotry name
-	uuid := uuid.New().String()
-	wg := sync.WaitGroup{}
 
 	src, err := file.Open()
 	if err != nil {
@@ -82,12 +78,45 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 		return nil, err
 	}
 
+	var successfulPhotos []*entity.Photo
+
+	err = retry.Do(
+		func() error {
+			var err error
+			successfulPhotos, err = s.uploadToS3(imageBytes, imageName)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		retry.Attempts(3),
+		retry.Delay(time.Second*2),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return successfulPhotos, nil
+}
+
+func (s *PhotoService) uploadToS3(imageBytes []byte, imageName string) ([]*entity.Photo, error) {
+	// init a uuid for images to use as db photo uuid and s3 directory name
+	errorChan := make(chan error, 3)
+	uuid := uuid.New().String()
+
+	wg := sync.WaitGroup{}
+	mutex := sync.Mutex{}
+
 	wg.Add(3)
 	now := time.Now()
 	successfulPhotos := []*entity.Photo{}
 	// thumbnail
 	go func() {
-		defer wg.Done()
+		defer func() {
+			errorChan <- nil
+			wg.Done()
+		}()
 		thumbnailBytes, err := s.generateThumbnail(imageBytes)
 		if err != nil {
 			errorChan <- err
@@ -113,12 +142,17 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 			errorChan <- err
 			return
 		}
+		mutex.Lock()
 		successfulPhotos = append(successfulPhotos, savedPhoto)
+		mutex.Unlock()
 	}()
 
 	// regular sized image
 	go func() {
-		defer wg.Done()
+		defer func() {
+			errorChan <- nil
+			wg.Done()
+		}()
 		mediumBytes, err := s.generateregular(imageBytes)
 		if err != nil {
 			errorChan <- err
@@ -143,13 +177,18 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 			errorChan <- err
 			return
 		}
-		successfulPhotos = append(successfulPhotos, savedPhoto)
 
+		mutex.Lock()
+		successfulPhotos = append(successfulPhotos, savedPhoto)
+		mutex.Unlock()
 	}()
 
 	// original image - private bucket
 	go func() {
-		defer wg.Done()
+		defer func() {
+			errorChan <- nil
+			wg.Done()
+		}()
 		s3_path, err := s.uploadImagePivate(imageBytes, uuid, imageName)
 		if err != nil {
 			errorChan <- err
@@ -168,23 +207,32 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 			errorChan <- err
 			return
 		}
+
+		mutex.Lock()
 		successfulPhotos = append(successfulPhotos, savedPhoto)
+		mutex.Unlock()
 	}()
+
+	var innerErr error
 
 	go func() {
 		for {
 			select {
-			case err, ok := <-errorChan:
-				if !ok {
+			case err, _ := <-errorChan:
+				if err != nil {
+					logger.Logger.Error("error - GenerateAndUploadImages", zap.Error(err))
+					innerErr = err
 					return
 				}
-				logger.Logger.Error("error - GenerateAndUploadImages", zap.Error(err))
 			}
 		}
 	}()
 
-	// TODO: make sure no upload errors
 	wg.Wait()
+
+	if innerErr != nil {
+		return nil, innerErr
+	}
 
 	return successfulPhotos, nil
 }
