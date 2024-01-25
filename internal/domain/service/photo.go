@@ -90,7 +90,7 @@ func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, image
 
 			return nil
 		},
-		retry.Attempts(3),
+		retry.Attempts(3), // ! Retry value could be declare in config file
 		retry.Delay(time.Second*2),
 	)
 	if err != nil {
