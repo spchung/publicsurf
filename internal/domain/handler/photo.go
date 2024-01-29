@@ -46,6 +46,29 @@ func (h *PhotoHandler) GenerateAndUploadImages(c *gin.Context) {
 	response.ResponseOKWithData(c, savesPhoto)
 }
 
+type bulkUploadUploadResponse struct {
+	Photos [][]*entity.Photo `json:"photos"`
+}
+
+func (h *PhotoHandler) GenerateAndBulkUploadImages(c *gin.Context) {
+	form, err := c.MultipartForm()
+	if err != nil {
+		logger.Logger.Error("error - GenerateAndBulkUploadImages handler", zap.Error(err))
+		response.ResponseError(c, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	files := form.File["upload[]"] // * Tell client to send files with key "upload[]"
+
+	var resp bulkUploadUploadResponse
+
+	photos, err := h.photoService.GenerateAndBulkUploadImages(files)
+
+	resp.Photos = photos
+
+	response.ResponseOKWithData(c, resp)
+}
+
 func (h *PhotoHandler) ListUserPhotos(c *gin.Context) {
 	param := c.Param("user_id")
 

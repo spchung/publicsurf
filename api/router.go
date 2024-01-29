@@ -52,6 +52,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	creatorAPI.Use(middleware.IsCreatorMiddleware(db))
 	{
 		creatorAPI.POST("/upload", photoHandler.GenerateAndUploadImages)
+		creatorAPI.POST("/bulk_upload", photoHandler.GenerateAndBulkUploadImages)
 	}
 
 	authAPI := baseAPI.Group("/auth")
