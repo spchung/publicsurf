@@ -33,6 +33,7 @@ type IPhotoService interface {
 	GetPhotoUploaderName(id int) (string, error)
 	ListUserPhotos(userEmail int) ([]*entity.Photo, error)
 	GenerateAndUploadImages(file *multipart.FileHeader, imageName string) ([]*entity.Photo, error)
+	GenerateAndBulkUploadImages(files []*multipart.FileHeader) ([][]*entity.Photo, error)
 	GetPhoto(id int) (*entity.PhotoView, error)
 }
 
@@ -62,6 +63,57 @@ func (s *PhotoService) GetPhotoUploaderName(photoID int) (string, error) {
 		return "", err
 	}
 	return user.FirstName + " " + user.LastName, nil
+}
+
+func (s *PhotoService) GenerateAndBulkUploadImages(files []*multipart.FileHeader) ([][]*entity.Photo, error) {
+	output := make([][]*entity.Photo, 0)
+	errorChan := make(chan error)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	defer close(errorChan)
+
+	wg.Add(len(files))
+	for i := range files {
+		file := files[i]
+		fNames := strings.Split(file.Filename, ".")
+		fileName := fNames[len(fNames)-1]
+
+		go func(file *multipart.FileHeader, fileName string) {
+			photos, err := s.GenerateAndUploadImages(file, fileName)
+			defer wg.Done()
+			if err != nil {
+				errorChan <- err
+				return
+			}
+			mu.Lock()
+			output = append(output, photos)
+			mu.Unlock()
+		}(file, fileName)
+	}
+
+	var innerErr error
+
+	go func() {
+		for {
+			select {
+			case err, _ := <-errorChan:
+				if err != nil {
+					logger.Logger.Error("error - GenerateAndUploadImages", zap.Error(err))
+					innerErr = err
+					return
+				}
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if innerErr != nil {
+		return nil, innerErr
+	}
+
+	return output, nil
 }
 
 func (s *PhotoService) GenerateAndUploadImages(file *multipart.FileHeader, imageName string) ([]*entity.Photo, error) {
